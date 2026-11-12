@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Waxterm",
+  "version": "1.0.0",
+  "identifier": "com.waxterm.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Waxterm",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 500,
+        "minHeight": 400,
+        "decorations": false,
+        "shadow": false,
+        "backgroundColor": [10, 14, 20, 255],
+        "theme": "Dark"
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' asset: http://asset.localhost data: blob:",
+        "font-src": "'self' data:",
+        "connect-src": "ipc: http://ipc.localhost https://api.github.com ws: wss:",
+        "object-src": "'none'",
+        "base-uri": "'self'",
+        "frame-src": "'none'"
+      },
+      "dangerousDisableAssetCspModification": ["style-src"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

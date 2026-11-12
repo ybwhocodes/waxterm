@@ -1,0 +1,11 @@
+[package]
+name = "waxterm-core"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "waxterm-core"
+path = "src-rust/main.rs"
+
+[dependencies]
+# ponytail: pakai stdlib std::process::Command (native ssh); ganti russh saat butuh embedded pure-rust SSH tanpa dependensi binary OpenSSH.

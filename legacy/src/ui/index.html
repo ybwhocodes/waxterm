@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="id" class="dark h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waxterm | AI SSH Client & DevOps Terminal</title>
+
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: '#27272a',
+            input: '#27272a',
+            ring: '#3f3f46',
+            background: '#09090b',
+            foreground: '#fafafa',
+            card: {
+              DEFAULT: '#18181b',
+              foreground: '#fafafa'
+            },
+            popover: {
+              DEFAULT: '#18181b',
+              foreground: '#fafafa'
+            },
+            primary: {
+              DEFAULT: '#fafafa',
+              foreground: '#18181b'
+            },
+            secondary: {
+              DEFAULT: '#27272a',
+              foreground: '#fafafa'
+            },
+            muted: {
+              DEFAULT: '#27272a',
+              foreground: '#a1a1aa'
+            },
+            accent: {
+              DEFAULT: '#27272a',
+              foreground: '#fafafa'
+            },
+            destructive: {
+              DEFAULT: '#7f1d1d',
+              foreground: '#fca5a5'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Custom Scrollbar for shadcn sleek look */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #09090b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3f3f46;
+    }
+  </style>
+</head>
+<body class="h-full bg-background text-foreground font-sans antialiased flex flex-col overflow-hidden selection:bg-zinc-800 selection:text-zinc-100">
+
+  <!-- Top Navigation Header (Shadcn Navbar) -->
+  <header class="h-14 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur px-5 flex items-center justify-between shrink-0 z-20">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center font-mono font-bold text-black text-sm shadow-md shadow-orange-950/40">
+        &gt;_
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-base tracking-tight text-zinc-100">Waxterm</span>
+        <span class="inline-flex items-center rounded-md border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[11px] font-medium text-zinc-400">
+          AI SSH Client
+        </span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs List (Shadcn Tabs) -->
+    <div class="inline-flex h-9 items-center justify-center rounded-lg bg-zinc-900/90 p-1 text-zinc-400 border border-zinc-800/80" id="main-nav-tabs">
+      <button class="tab-btn active inline-flex items-center justify-center whitespace-nowrap rounded-md px-3.5 py-1 text-xs font-medium transition-all text-zinc-100 bg-zinc-800 shadow-sm border border-zinc-700/50 gap-1.5" id="tab-btn-connect" onclick="switchTab('connect')">
+        <i data-lucide="server" class="w-3.5 h-3.5"></i>
+        <span>Koneksi SSH</span>
+      </button>
+      <button class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3.5 py-1 text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 gap-1.5" id="tab-btn-terminal" onclick="switchTab('terminal')">
+        <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+        <span>AI Console & Terminal</span>
+      </button>
+      <button class="tab-btn hidden inline-flex items-center justify-center whitespace-nowrap rounded-md px-3.5 py-1 text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 gap-1.5" id="tab-btn-users" onclick="switchTab('users')">
+        <i data-lucide="users" class="w-3.5 h-3.5"></i>
+        <span>Manajemen Pengguna</span>
+      </button>
+      <button class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3.5 py-1 text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 gap-1.5" id="tab-btn-settings" onclick="switchTab('settings')">
+        <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+        <span>Pengaturan AI</span>
+      </button>
+    </div>
+
+    <!-- User Profile Bar (Shadcn User Dropdown look) -->
+    <div class="flex items-center gap-3">
+      <div id="auth-pill" class="hidden items-center gap-3">
+        <div class="flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800">
+          <div class="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-300" id="user-avatar-initial">
+            A
+          </div>
+          <span class="text-xs font-medium text-zinc-200" id="user-name-display">admin</span>
+          <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase" id="user-role-badge">
+            SUPER ADMIN
+          </span>
+        </div>
+        <button onclick="handleLogout()" class="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors hover:bg-zinc-800 hover:text-zinc-100 text-zinc-400 h-8 px-2.5 border border-zinc-800/80 gap-1.5" title="Keluar">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+          <span>Keluar</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Viewports -->
+  <main class="flex-1 flex overflow-hidden relative">
+
+    <!-- ================= TAB 1: KONEKSI SSH & DAFTAR SERVER ================= -->
+    <div class="view-panel flex flex-1 flex-col h-full overflow-y-auto" id="view-connect">
+      <div class="max-w-6xl mx-auto w-full p-6 space-y-6">
+
+        <!-- Banner / Header Action -->
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 backdrop-blur shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-lg font-bold text-zinc-100 tracking-tight">🖥️ Server SSH Tersimpan</h2>
+                <span class="inline-flex items-center rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
+                  1-Click Direct Connect
+                </span>
+              </div>
+              <p class="text-xs text-zinc-400 mt-1">
+                Pilih profil server dan klik tombol hijau untuk langsung menghubungkan remote shell dan asisten DevOps AI.
+              </p>
+            </div>
+            <button onclick="openAddServerModal()" class="inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all bg-zinc-100 text-zinc-950 hover:bg-white shadow-sm hover:shadow h-9 px-4 gap-2 shrink-0">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Tambah Server SSH Baru</span>
+            </button>
+          </div>
+
+          <!-- Server Cards Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6" id="connections-grid">
+            <div class="col-span-full py-12 text-center text-xs text-zinc-500 flex flex-col items-center justify-center gap-2">
+              <i data-lucide="loader" class="w-5 h-5 animate-spin text-zinc-600"></i>
+              <span>Memuat daftar server tersimpan...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manual Quick Connect Card (Shadcn Card with Auth Options) -->
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-6 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+              <h3 class="text-sm font-semibold text-zinc-200">Sambung Cepat Manual</h3>
+            </div>
+            <span class="text-[11px] text-zinc-500">Mendukung Password &amp; SSH Key</span>
+          </div>
+          <p class="text-xs text-zinc-400 mt-1">
+            Hubungkan ke host remote sekali pakai (misal: <code>busdev@10.240.55.60</code>).
+          </p>
+
+          <form onsubmit="event.preventDefault(); handleManualConnect();" class="mt-4 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="sm:col-span-2 space-y-1.5">
+                <label class="text-xs font-medium text-zinc-400">Target Host (user@ip atau domain)</label>
+                <input type="text" id="manual-host" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm transition-colors placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400" placeholder="busdev@10.240.55.60 atau root@vps.com" required>
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-xs font-medium text-zinc-400">Port SSH</label>
+                <input type="number" id="manual-port" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400" value="22" min="1" max="65535">
+              </div>
+            </div>
+
+            <!-- Auth Method Selector for Manual -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="space-y-1.5">
+                <label class="text-xs font-medium text-zinc-400">Metode Autentikasi</label>
+                <select id="manual-authtype" onchange="toggleManualAuthFields()" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1 text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                  <option value="password">Password SSH</option>
+                  <option value="key">SSH Private Key</option>
+                  <option value="agent">SSH Agent / Default</option>
+                </select>
+              </div>
+
+              <!-- Password Input -->
+              <div class="space-y-1.5" id="manual-group-password">
+                <label class="text-xs font-medium text-zinc-400">Password Remote SSH</label>
+                <div class="relative flex items-center">
+                  <input type="password" id="manual-password" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm pr-9 focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="Masukkan password SSH">
+                  <button type="button" onclick="togglePasswordVisibility('manual-password', this)" class="absolute right-2.5 text-zinc-500 hover:text-zinc-300">
+                    <i data-lucide="eye" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Key Path Input -->
+              <div class="space-y-1.5 hidden" id="manual-group-key">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-medium text-zinc-400">Lokasi File Private Key</label>
+                  <button type="button" onclick="document.getElementById('manual-keypath').value='~/.ssh/id_rsa'" class="text-[10px] text-blue-400 hover:underline">Gunakan ~/.ssh/id_rsa</button>
+                </div>
+                <input type="text" id="manual-keypath" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="~/.ssh/id_rsa">
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 pt-2">
+              <button type="submit" class="inline-flex items-center justify-center rounded-md text-xs font-semibold transition-colors bg-zinc-100 text-zinc-950 hover:bg-white h-9 px-4 gap-1.5 shadow-sm">
+                <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                <span>Sambungkan Sekarang</span>
+              </button>
+              <button type="button" onclick="handleManualPing()" class="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 h-9 px-3.5 gap-1.5">
+                <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+                <span>Uji Ping Probe</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= TAB 2: AI CONSOLE & TERMINAL SPLIT VIEW ================= -->
+    <div class="view-panel hidden flex-1 w-full h-full" id="view-terminal">
+      <div class="flex w-full h-full">
+
+        <!-- Left Column: AI DevOps Chat Assistant -->
+        <div class="w-[460px] border-r border-zinc-800 flex flex-col bg-zinc-950 shrink-0">
+          
+          <!-- Chat Header -->
+          <div class="h-11 px-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span class="text-xs font-semibold text-zinc-200">Asisten AI DevOps</span>
+            </div>
+            <button onclick="clearChat()" class="text-[11px] text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-800/80 rounded px-2 py-0.5 transition-colors">
+              Clear Chat
+            </button>
+          </div>
+
+          <!-- Quick Action Chips -->
+          <div class="px-3 py-2 bg-zinc-900/40 border-b border-zinc-800/80 flex items-center gap-1.5 overflow-x-auto">
+            <button onclick="sendQuickPrompt('Cek penggunaan CPU dan RAM server')" class="inline-flex items-center whitespace-nowrap rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors gap-1">
+              📊 <span>CPU & RAM</span>
+            </button>
+            <button onclick="sendQuickPrompt('Cek sisa kapasitas disk space df -h')" class="inline-flex items-center whitespace-nowrap rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors gap-1">
+              💾 <span>Disk Space</span>
+            </button>
+            <button onclick="sendQuickPrompt('Cek port yang listening dan status firewall')" class="inline-flex items-center whitespace-nowrap rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors gap-1">
+              🌐 <span>Port & Net</span>
+            </button>
+            <button onclick="sendQuickPrompt('Cari error log terbaru di /var/log')" class="inline-flex items-center whitespace-nowrap rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors gap-1">
+              📜 <span>Error Log</span>
+            </button>
+          </div>
+
+          <!-- Chat Messages Area -->
+          <div class="flex-1 p-4 overflow-y-auto space-y-4" id="chat-messages">
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-mono text-[10px] font-bold shrink-0 mt-0.5">
+                AI
+              </div>
+              <div class="rounded-xl rounded-tl-sm border border-zinc-800 bg-zinc-900/80 p-3.5 text-xs text-zinc-300 leading-relaxed shadow-sm">
+                Halo! Saya agen DevOps cerdas Anda.
+                <br><br>
+                Pilih server pada tab <strong class="text-zinc-100">Koneksi SSH</strong> dan klik <strong class="text-emerald-400">🚀 Konek Langsung</strong> untuk memulai sesi. Anda dapat memerintahkan saya untuk memeriksa beban sistem, mengaudit log, atau menyelesaikan troubleshooting secara otomatis.
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat Input Area -->
+          <div class="p-3 border-t border-zinc-800 bg-zinc-900/30">
+            <form onsubmit="event.preventDefault(); handleSendAiMessage();" class="flex gap-2">
+              <input type="text" id="chat-prompt-input" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1 text-xs text-zinc-100 shadow-sm transition-colors placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400" placeholder="Ketik instruksi untuk agen AI..." autocomplete="off">
+              <button type="submit" id="btn-send-ai" class="inline-flex items-center justify-center rounded-md text-xs font-semibold transition-colors bg-zinc-100 text-zinc-950 hover:bg-white h-9 px-3 gap-1 shrink-0 shadow-sm">
+                <span>Kirim</span>
+                <i data-lucide="send" class="w-3 h-3"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right Column: Shell Remote Terminal Screen -->
+        <div class="flex-1 flex flex-col bg-black">
+          
+          <!-- Terminal Header (Mac Window Style) -->
+          <div class="h-11 px-4 border-b border-zinc-800/80 bg-zinc-950/90 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-1.5">
+                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+              </div>
+              <div class="h-4 w-px bg-zinc-800 mx-1"></div>
+              <span class="font-mono text-xs text-zinc-400" id="term-host-title">Remote Terminal: (Belum Terhubung)</span>
+            </div>
+            <button onclick="clearTerminal()" class="text-[11px] text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-800/80 rounded px-2 py-0.5 transition-colors">
+              Clear Screen
+            </button>
+          </div>
+
+          <!-- Terminal Content Output -->
+          <div class="flex-1 p-4 font-mono text-xs leading-relaxed text-zinc-300 overflow-y-auto whitespace-pre-wrap break-all" id="terminal-screen">
+Waxterm Remote Terminal Console v1.0
+Silakan pilih server pada tab [Koneksi SSH] dan klik [🚀 Konek Langsung] atau gunakan form Sambung Cepat.
+          </div>
+
+          <!-- Direct Shell Prompt Bar -->
+          <div class="h-11 px-3 border-t border-zinc-800/80 bg-zinc-950 flex items-center gap-2">
+            <span class="font-mono text-xs font-bold text-emerald-400 shrink-0" id="term-user-prefix">ssh&gt;</span>
+            <input type="text" id="term-cmd-input" class="flex-1 bg-transparent font-mono text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none" placeholder="Ketik perintah shell langsung (misal: 'uptime', 'docker ps', 'systemctl status')..." onkeydown="if(event.key==='Enter') handleDirectCommand();">
+            <button onclick="handleDirectCommand()" class="inline-flex items-center justify-center rounded text-xs font-medium border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 h-7 px-3 transition-colors">
+              Jalankan
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= TAB 3: MANAJEMEN PENGGUNA (SUPER ADMIN) ================= -->
+    <div class="view-panel hidden flex-1 flex-col h-full overflow-y-auto" id="view-users">
+      <div class="max-w-5xl mx-auto w-full p-6 space-y-6">
+
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 backdrop-blur shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-lg font-bold text-zinc-100 tracking-tight">👥 Manajemen Pengguna & Hak Akses</h2>
+                <span class="inline-flex items-center rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[11px] font-semibold text-amber-400">
+                  Super Admin
+                </span>
+              </div>
+              <p class="text-xs text-zinc-400 mt-1">
+                Kelola akun administrator sistem. Super Admin memiliki wewenang penuh atas konfigurasi dan seluruh user.
+              </p>
+            </div>
+            <button onclick="openAddUserModal()" class="inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all bg-zinc-100 text-zinc-950 hover:bg-white shadow-sm h-9 px-4 gap-2 shrink-0">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              <span>Tambah Administrator Baru</span>
+            </button>
+          </div>
+
+          <!-- Users Table (Shadcn Table) -->
+          <div class="rounded-lg border border-zinc-800 overflow-hidden mt-6">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-zinc-950/60 text-zinc-400 font-semibold border-b border-zinc-800 uppercase tracking-wider text-[11px]">
+                <tr>
+                  <th class="px-4 py-3">Username</th>
+                  <th class="px-4 py-3">Nama Lengkap</th>
+                  <th class="px-4 py-3">Role Hak Akses</th>
+                  <th class="px-4 py-3">Tanggal Dibuat</th>
+                  <th class="px-4 py-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-zinc-800/80 bg-zinc-900/30" id="users-table-body">
+                <tr>
+                  <td colspan="5" class="px-4 py-8 text-center text-zinc-500">Memuat data pengguna...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= TAB 4: PENGATURAN AI ================= -->
+    <div class="view-panel hidden flex-1 flex-col h-full overflow-y-auto" id="view-settings">
+      <div class="max-w-3xl mx-auto w-full p-6 space-y-6">
+
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 backdrop-blur shadow-sm">
+          <div class="flex items-center gap-2">
+            <i data-lucide="bot" class="w-5 h-5 text-zinc-300"></i>
+            <h2 class="text-base font-bold text-zinc-100 tracking-tight">Konfigurasi Penyedia AI (LLM)</h2>
+          </div>
+          <p class="text-xs text-zinc-400 mt-1">
+            Waxterm mendukung semua model yang kompatibel dengan protokol OpenAI API (OpenAI, DeepSeek, Ollama lokal, OpenRouter, Groq).
+          </p>
+
+          <form onsubmit="event.preventDefault(); handleSaveAiSettings();" class="mt-6 space-y-4">
+            <div class="space-y-1.5">
+              <label class="text-xs font-medium text-zinc-300">API URL Endpoint</label>
+              <input type="text" id="cfg-api-url" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400" placeholder="https://api.openai.com/v1 atau http://localhost:11434/v1" required>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-medium text-zinc-300">API Key</label>
+              <input type="password" id="cfg-api-key" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400" placeholder="sk-..." required>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-medium text-zinc-300">Nama Model AI</label>
+              <input type="text" id="cfg-model" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400" placeholder="gpt-4o, claude-3-5-sonnet, deepseek-chat, qwen2.5-coder" required>
+            </div>
+
+            <div class="pt-2">
+              <button type="submit" class="inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-colors bg-zinc-100 text-zinc-950 hover:bg-white h-9 px-5 shadow-sm">
+                Simpan Pengaturan AI
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= MODALS & DIALOGS (SHADCN DIALOG) ================= -->
+
+  <!-- Modal Login -->
+  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" id="login-modal">
+    <div class="w-full max-w-sm rounded-xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
+      <div class="text-center space-y-2 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center font-mono font-bold text-black text-lg mx-auto shadow-md">
+          &gt;_
+        </div>
+        <h3 class="text-lg font-bold text-zinc-100 tracking-tight">Masuk ke Waxterm</h3>
+        <p class="text-xs text-zinc-400">
+          Akun bawaan: <code class="rounded bg-zinc-800 px-1 py-0.5 text-zinc-200">admin</code> / <code class="rounded bg-zinc-800 px-1 py-0.5 text-zinc-200">admin123</code>
+        </p>
+      </div>
+
+      <form onsubmit="event.preventDefault(); handleLogin();" class="space-y-4">
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-zinc-300">Username</label>
+          <input type="text" id="login-username" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="admin" required autofocus>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-zinc-300">Password</label>
+          <input type="password" id="login-password" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="w-full inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-colors bg-zinc-100 text-zinc-950 hover:bg-white h-9 shadow-sm mt-2">
+          Masuk Sekarang
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Tambah/Edit Server SSH -->
+  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" id="server-modal">
+    <div class="w-full max-w-lg rounded-xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-zinc-800/80 pb-4">
+        <div>
+          <h3 class="text-base font-bold text-zinc-100" id="server-modal-title">Tambah Profil Server SSH</h3>
+          <p class="text-xs text-zinc-400 mt-0.5">Simpan kredensial server agar siap terhubung dalam 1 klik.</p>
+        </div>
+        <button onclick="closeServerModal()" class="text-zinc-400 hover:text-zinc-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); handleSaveServer();" class="mt-4 space-y-4">
+        <input type="hidden" id="server-id">
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-zinc-300">Nama / Label Server</label>
+          <input type="text" id="server-name" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="Contoh: VPS Internal Office (busdev)" required>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div class="col-span-2 space-y-1.5">
+            <label class="text-xs font-medium text-zinc-300">IP VPS / Domain Host</label>
+            <input type="text" id="server-host" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="10.240.55.60 atau vps.mycorp.com" required>
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-zinc-300">Port SSH</label>
+            <input type="number" id="server-port" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" value="22" min="1" max="65535" required>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-zinc-300">SSH Username</label>
+            <input type="text" id="server-user" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="busdev / root" value="root">
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-zinc-300">Metode Autentikasi</label>
+            <select id="server-authtype" onchange="toggleServerAuthFields()" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
+              <option value="password">Password SSH</option>
+              <option value="key">SSH Private Key</option>
+              <option value="agent">SSH Agent / Default</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Password Field for Server Modal -->
+        <div class="space-y-1.5" id="group-server-password">
+          <label class="text-xs font-medium text-zinc-300">Password SSH</label>
+          <div class="relative flex items-center">
+            <input type="password" id="server-password" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm pr-9 focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="Masukkan password user SSH">
+            <button type="button" onclick="togglePasswordVisibility('server-password', this)" class="absolute right-2.5 text-zinc-500 hover:text-zinc-300">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Key Path Field for Server Modal -->
+        <div class="space-y-1.5 hidden" id="group-server-keypath">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-medium text-zinc-300">Path File Private Key</label>
+            <button type="button" onclick="document.getElementById('server-keypath').value='~/.ssh/id_rsa'" class="text-[10px] text-blue-400 hover:underline">Gunakan ~/.ssh/id_rsa</button>
+          </div>
+          <input type="text" id="server-keypath" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="~/.ssh/id_rsa atau /Users/user/.ssh/prod_vps.pem">
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-zinc-300">Catatan Server (Opsional)</label>
+          <input type="text" id="server-notes" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="Contoh: VPS Development Tim Busdev">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeServerModal()" class="inline-flex items-center justify-center rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 h-9 px-4">
+            Batal
+          </button>
+          <button type="submit" class="inline-flex items-center justify-center rounded-lg text-xs font-semibold bg-zinc-100 text-zinc-950 hover:bg-white h-9 px-4 shadow-sm">
+            Simpan Profil Server
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Tambah User (Super Admin Only) -->
+  <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" id="user-modal">
+    <div class="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-zinc-800/80 pb-4">
+        <div>
+          <h3 class="text-base font-bold text-zinc-100">Tambah Administrator Baru</h3>
+          <p class="text-xs text-zinc-400 mt-0.5">Tentukan role hak akses Super Admin atau Admin biasa.</p>
+        </div>
+        <button onclick="closeUserModal()" class="text-zinc-400 hover:text-zinc-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); handleSaveUser();" class="mt-4 space-y-4">
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-zinc-300">Username</label>
+          <input type="text" id="user-new-username" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="devops_john" required>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-zinc-300">Nama Lengkap</label>
+          <input type="text" id="user-new-name" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" placeholder="John Doe" required>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-zinc-300">Password (minimal 6 karakter)</label>
+          <input type="password" id="user-new-pass" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400" required>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-zinc-300">Role Hak Akses</label>
+          <select id="user-new-role" class="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
+            <option value="admin">Admin (Kelola server & terminal)</option>
+            <option value="super_admin">Super Admin (Akses penuh & kelola pengguna)</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeUserModal()" class="inline-flex items-center justify-center rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 h-9 px-4">
+            Batal
+          </button>
+          <button type="submit" class="inline-flex items-center justify-center rounded-lg text-xs font-semibold bg-zinc-100 text-zinc-950 hover:bg-white h-9 px-4 shadow-sm">
+            Buat Pengguna
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal for Dangerous Commands -->
+  <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4" id="confirm-modal">
+    <div class="w-full max-w-lg rounded-xl border border-red-800/80 bg-zinc-950 p-6 shadow-2xl shadow-red-950/40" id="modal-box">
+      <div class="flex items-center gap-2.5 text-red-400">
+        <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0 text-red-400"></i>
+        <h3 class="text-base font-bold text-zinc-100" id="modal-title">Konfirmasi Eksekusi Perintah</h3>
+      </div>
+
+      <div class="mt-3 p-3 rounded-lg bg-red-950/30 border border-red-900/50 text-xs text-red-300" id="modal-alert-box">
+        <span id="modal-alert-text">AI merekomendasikan eksekusi perintah shell berikut:</span>
+      </div>
+
+      <div class="mt-3 p-3 rounded-lg bg-black border border-zinc-800 font-mono text-xs text-blue-400 break-all select-all" id="modal-cmd-text">
+        echo hello
+      </div>
+
+      <div id="modal-strict-input-area" class="mt-4 hidden space-y-1.5">
+        <label class="text-xs font-bold text-red-400">Perintah ini sangat berisiko! Ketik persis "YA" untuk menyetujui:</label>
+        <input type="text" id="modal-strict-confirm-input" class="flex h-9 w-full rounded-md border border-red-800 bg-zinc-900 px-3 py-1 font-mono text-xs text-zinc-100 shadow-sm focus:outline-none focus:ring-1 focus:ring-red-500" placeholder="Ketik YA">
+      </div>
+
+      <div class="flex justify-end gap-2 mt-5">
+        <button onclick="handleRejectCommand()" class="inline-flex items-center justify-center rounded-lg text-xs font-medium border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 h-9 px-4">
+          ❌ Batalkan
+        </button>
+        <button id="btn-modal-confirm" onclick="handleApproveCommand()" class="inline-flex items-center justify-center rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white h-9 px-4 shadow-sm">
+          ✅ Setujui & Jalankan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast (Shadcn Toast) -->
+  <div class="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/95 px-4 py-3 text-xs font-medium text-zinc-100 shadow-xl backdrop-blur transition-all duration-200 hidden" id="toast">
+    <i data-lucide="info" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+    <span id="toast-msg">Notifikasi</span>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let authToken = localStorage.getItem("waxterm_token") || "";
+    let activeHost = "";
+    let activePort = 22;
+    let activeKeyPath = "";
+    let activePassword = "";
+    let pendingToolCall = null;
+    let chatHistory = [];
+
+    function showToast(msg, duration = 3000) {
+      const t = document.getElementById("toast");
+      const msgEl = document.getElementById("toast-msg");
+      msgEl.innerText = msg;
+      t.classList.remove("hidden");
+      t.classList.add("flex");
+      setTimeout(() => {
+        t.classList.add("hidden");
+        t.classList.remove("flex");
+      }, duration);
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll(".tab-btn").forEach(b => {
+        b.classList.remove("active", "bg-zinc-800", "text-zinc-100", "shadow-sm", "border", "border-zinc-700/50");
+        b.classList.add("text-zinc-400");
+      });
+      document.querySelectorAll(".view-panel").forEach(p => {
+        p.classList.add("hidden");
+        p.classList.remove("flex");
+      });
+
+      const targetBtn = document.getElementById(`tab-btn-${tabName}`);
+      const targetView = document.getElementById(`view-${tabName}`);
+      if (targetBtn) {
+        targetBtn.classList.add("active", "bg-zinc-800", "text-zinc-100", "shadow-sm", "border", "border-zinc-700/50");
+        targetBtn.classList.remove("text-zinc-400");
+      }
+      if (targetView) {
+        targetView.classList.remove("hidden");
+        targetView.classList.add("flex");
+      }
+
+      if (tabName === "users" && currentUser?.role === "super_admin") {
+        loadUsersList();
+      }
+      lucide.createIcons();
+    }
+
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === "password") {
+        input.type = "text";
+        btn.innerHTML = `<i data-lucide="eye-off" class="w-4 h-4"></i>`;
+      } else {
+        input.type = "password";
+        btn.innerHTML = `<i data-lucide="eye" class="w-4 h-4"></i>`;
+      }
+      lucide.createIcons();
+    }
+
+    function toggleManualAuthFields() {
+      const type = document.getElementById("manual-authtype").value;
+      const groupPass = document.getElementById("manual-group-password");
+      const groupKey = document.getElementById("manual-group-key");
+      if (type === "password") {
+        groupPass.classList.remove("hidden");
+        groupKey.classList.add("hidden");
+      } else if (type === "key") {
+        groupPass.classList.add("hidden");
+        groupKey.classList.remove("hidden");
+      } else {
+        groupPass.classList.add("hidden");
+        groupKey.classList.add("hidden");
+      }
+    }
+
+    function toggleServerAuthFields() {
+      const type = document.getElementById("server-authtype").value;
+      const groupPass = document.getElementById("group-server-password");
+      const groupKey = document.getElementById("group-server-keypath");
+      if (type === "password") {
+        groupPass.classList.remove("hidden");
+        groupKey.classList.add("hidden");
+      } else if (type === "key") {
+        groupPass.classList.add("hidden");
+        groupKey.classList.remove("hidden");
+      } else {
+        groupPass.classList.add("hidden");
+        groupKey.classList.add("hidden");
+      }
+    }
+
+    async function apiFetch(endpoint, options = {}) {
+      const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      };
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
+      return fetch(endpoint, { credentials: "same-origin", ...options, headers });
+    }
+
+    // Auth & Init
+    async function init() {
+      lucide.createIcons();
+      try {
+        const res = await apiFetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          currentUser = data.user;
+          setupUserUi();
+          loadSavedServers();
+          loadAiConfig();
+        } else {
+          showLoginModal();
+        }
+      } catch {
+        showLoginModal();
+      }
+    }
+
+    function showLoginModal() {
+      const modal = document.getElementById("login-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      lucide.createIcons();
+    }
+
+    function setupUserUi() {
+      if (!currentUser) return;
+      const modal = document.getElementById("login-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+
+      const pill = document.getElementById("auth-pill");
+      pill.classList.remove("hidden");
+      pill.classList.add("flex");
+
+      document.getElementById("user-name-display").innerText = currentUser.name || currentUser.username;
+      document.getElementById("user-avatar-initial").innerText = (currentUser.name || currentUser.username)[0].toUpperCase();
+
+      const badge = document.getElementById("user-role-badge");
+      if (currentUser.role === "super_admin") {
+        badge.innerText = "SUPER ADMIN";
+        badge.className = "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20";
+        document.getElementById("tab-btn-users").classList.remove("hidden");
+      } else {
+        badge.innerText = "ADMIN";
+        badge.className = "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20";
+        document.getElementById("tab-btn-users").classList.add("hidden");
+      }
+      lucide.createIcons();
+    }
+
+    async function handleLogin() {
+      const username = document.getElementById("login-username").value.trim();
+      const password = document.getElementById("login-password").value;
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          authToken = data.token;
+          localStorage.setItem("waxterm_token", authToken);
+          currentUser = data.user;
+          setupUserUi();
+          loadSavedServers();
+          loadAiConfig();
+          showToast(`Selamat datang, ${currentUser.name}!`);
+        } else {
+          alert(`Login gagal: ${data.error}`);
+        }
+      } catch (e) {
+        alert(`Error koneksi: ${e.message}`);
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await apiFetch("/api/auth/logout", { method: "POST" });
+      } catch {}
+      authToken = "";
+      currentUser = null;
+      localStorage.removeItem("waxterm_token");
+      document.getElementById("auth-pill").classList.add("hidden");
+      document.getElementById("auth-pill").classList.remove("flex");
+      showLoginModal();
+    }
+
+    // ---------------- SAVED SERVERS & 1-CLICK CONNECT ----------------
+    async function loadSavedServers() {
+      try {
+        const res = await apiFetch("/api/connections");
+        if (!res.ok) return;
+        const list = await res.json();
+        const grid = document.getElementById("connections-grid");
+        grid.innerHTML = "";
+
+        if (!list || list.length === 0) {
+          grid.innerHTML = `
+            <div class="col-span-full py-10 text-center text-xs text-zinc-500 border border-dashed border-zinc-800 rounded-xl p-8">
+              Belum ada server tersimpan. Klik <strong class="text-zinc-300">"+ Tambah Server SSH Baru"</strong> untuk menyimpan server Anda.
+            </div>
+          `;
+          return;
+        }
+
+        list.forEach(item => {
+          const card = document.createElement("div");
+          const isCurrent = activeHost && (activeHost === item.host || activeHost === `${item.user}@${item.host}`);
+          
+          card.className = `rounded-xl border ${isCurrent ? 'border-emerald-500/80 bg-emerald-950/10 shadow-lg shadow-emerald-950/20' : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'} p-5 transition-all flex flex-col justify-between gap-4 group`;
+
+          const targetStr = item.user ? `${item.user}@${item.host}` : item.host;
+          const lastTime = item.lastConnectedAt ? new Date(item.lastConnectedAt).toLocaleString('id-ID') : 'Belum pernah';
+
+          card.innerHTML = `
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full ${isCurrent ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-zinc-600'}"></span>
+                  <span class="font-bold text-sm text-zinc-100 group-hover:text-white transition-colors">${escapeHtml(item.name || targetStr)}</span>
+                </div>
+                <span class="inline-flex items-center rounded-md border border-zinc-800 bg-zinc-950 px-2 py-0.5 font-mono text-[11px] text-zinc-400">
+                  :${item.port || 22}
+                </span>
+              </div>
+
+              <div class="mt-2 font-mono text-xs text-zinc-400 break-all flex items-center justify-between">
+                <span>${escapeHtml(targetStr)}</span>
+              </div>
+
+              <div class="flex items-center gap-3 mt-3 text-[11px] text-zinc-500">
+                <span class="flex items-center gap-1">🔑 ${escapeHtml(item.authType || 'Password')}</span>
+                <span>🕒 ${lastTime}</span>
+              </div>
+
+              ${item.notes ? `<div class="mt-2.5 p-2 rounded bg-zinc-950/60 border border-zinc-800/80 text-[11px] text-zinc-400">📝 ${escapeHtml(item.notes)}</div>` : ''}
+            </div>
+
+            <div class="pt-2 border-t border-zinc-800/60 space-y-2">
+              <button onclick="directConnectServer('${item.id}')" class="w-full inline-flex items-center justify-center rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white h-8 px-4 gap-1.5 shadow-md shadow-emerald-950/40 transition-all">
+                <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                <span>🚀 Konek Langsung</span>
+              </button>
+
+              <div class="flex items-center gap-1.5">
+                <button onclick="pingServer('${escapeHtml(targetStr)}', ${item.port || 22}, '${escapeHtml(item.keyPath || '')}', '${escapeHtml(item.password || '')}')" class="flex-1 inline-flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-950 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 h-7 text-[11px] font-medium transition-colors gap-1" title="Uji Koneksi">
+                  <i data-lucide="activity" class="w-3 h-3"></i>
+                  <span>Test Ping</span>
+                </button>
+                <button onclick='editServerModal(${JSON.stringify(item)})' class="inline-flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-950 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 h-7 px-2.5 transition-colors" title="Edit Server">
+                  <i data-lucide="edit-3" class="w-3 h-3"></i>
+                </button>
+                <button onclick="deleteServer('${item.id}')" class="inline-flex items-center justify-center rounded-md border border-red-900/40 bg-zinc-950 hover:bg-red-950/40 text-red-400 h-7 px-2.5 transition-colors" title="Hapus Server">
+                  <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+        lucide.createIcons();
+      } catch (e) {
+        console.error("Gagal load server:", e);
+      }
+    }
+
+    // 1-CLICK DIRECT CONNECT
+    async function directConnectServer(id) {
+      showToast("🚀 Menghubungkan langsung ke remote server...");
+
+      try {
+        const res = await apiFetch(`/api/connections/${id}/connect`, { method: "POST" });
+        const data = await res.json();
+        if (!data.ok) {
+          alert(`Gagal konek ke server: ${data.error}`);
+          return;
+        }
+
+        const p = data.profile;
+        activeHost = data.target;
+        activePort = p.port || 22;
+        activeKeyPath = p.keyPath || "";
+        activePassword = p.password || "";
+
+        document.getElementById("term-host-title").innerText = `Remote Terminal: ${activeHost}:${activePort}`;
+        document.getElementById("term-user-prefix").innerText = `${activeHost.split('@')[0] || 'ssh'}&gt;`;
+
+        switchTab("terminal");
+
+        appendTerminalLine(`\n==================================================`, "sys");
+        appendTerminalLine(`🚀 [Waxterm] Terhubung ke: ${activeHost}:${activePort}`, "sys");
+
+        if (data.probe) {
+          if (data.probe.stdout) {
+            appendTerminalLine(`[Sistem Info Remote]:\n${data.probe.stdout.trim()}`, "out");
+          }
+          if (data.probe.stderr) {
+            appendTerminalLine(`[Pesan]: ${data.probe.stderr}`, "err");
+            handleAuthErrorCheck(data.probe.stderr, activeHost);
+          }
+        }
+        appendTerminalLine(`==================================================\n`, "sys");
+
+        showToast(`✅ Sesi aktif untuk ${activeHost}!`);
+        loadSavedServers();
+      } catch (e) {
+        alert(`Koneksi error: ${e.message}`);
+      }
+    }
+
+    async function pingServer(target, port, keyPath, password) {
+      showToast(`Menguji keterjangkauan ${target}:${port}...`);
+      try {
+        const res = await apiFetch("/api/test-connection", {
+          method: "POST",
+          body: JSON.stringify({ host: target, port, keyPath, password })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showToast(`✅ Ping berhasil! Latensi: ${data.latencyMs}ms`);
+        } else {
+          alert(`❌ Uji koneksi gagal: ${data.error}`);
+        }
+      } catch (e) {
+        alert(`Error: ${e.message}`);
+      }
+    }
+
+    function openAddServerModal() {
+      document.getElementById("server-id").value = "";
+      document.getElementById("server-name").value = "";
+      document.getElementById("server-host").value = "";
+      document.getElementById("server-port").value = "22";
+      document.getElementById("server-user").value = "root";
+      document.getElementById("server-authtype").value = "password";
+      document.getElementById("server-password").value = "";
+      document.getElementById("server-keypath").value = "";
+      document.getElementById("server-notes").value = "";
+      document.getElementById("server-modal-title").innerText = "Tambah Profil Server SSH";
+      
+      toggleServerAuthFields();
+      const modal = document.getElementById("server-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      lucide.createIcons();
+    }
+
+    function editServerModal(item) {
+      document.getElementById("server-id").value = item.id;
+      document.getElementById("server-name").value = item.name || "";
+      document.getElementById("server-host").value = item.host || "";
+      document.getElementById("server-port").value = item.port || 22;
+      document.getElementById("server-user").value = item.user || "";
+      document.getElementById("server-authtype").value = item.authType || "password";
+      document.getElementById("server-password").value = item.password || "";
+      document.getElementById("server-keypath").value = item.keyPath || "";
+      document.getElementById("server-notes").value = item.notes || "";
+      document.getElementById("server-modal-title").innerText = "Ubah Profil Server SSH";
+      
+      toggleServerAuthFields();
+      const modal = document.getElementById("server-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      lucide.createIcons();
+    }
+
+    function closeServerModal() {
+      const modal = document.getElementById("server-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    async function handleSaveServer() {
+      const id = document.getElementById("server-id").value;
+      const name = document.getElementById("server-name").value.trim();
+      const host = document.getElementById("server-host").value.trim();
+      const port = parseInt(document.getElementById("server-port").value) || 22;
+      const user = document.getElementById("server-user").value.trim();
+      const authType = document.getElementById("server-authtype").value;
+      const password = document.getElementById("server-password").value;
+      const keyPath = document.getElementById("server-keypath").value.trim();
+      const notes = document.getElementById("server-notes").value.trim();
+
+      const res = await apiFetch("/api/connections", {
+        method: "POST",
+        body: JSON.stringify({
+          id: id || undefined,
+          name,
+          host,
+          port,
+          user,
+          authType,
+          password: authType === "password" ? password : undefined,
+          keyPath: authType === "key" ? keyPath : undefined,
+          notes
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast("Server berhasil disimpan!");
+        closeServerModal();
+        loadSavedServers();
+      } else {
+        alert("Gagal menyimpan server: " + data.error);
+      }
+    }
+
+    async function deleteServer(id) {
+      if (!confirm("Hapus server ini dari riwayat tersimpan?")) return;
+      await apiFetch(`/api/connections/${id}`, { method: "DELETE" });
+      loadSavedServers();
+    }
+
+    // Manual Connect
+    async function handleManualConnect() {
+      const hostInput = document.getElementById("manual-host").value.trim();
+      const port = parseInt(document.getElementById("manual-port").value) || 22;
+      const authType = document.getElementById("manual-authtype").value;
+      const pass = document.getElementById("manual-password").value;
+      const key = document.getElementById("manual-keypath").value.trim();
+
+      activeHost = hostInput;
+      activePort = port;
+      activePassword = authType === "password" ? pass : "";
+      activeKeyPath = authType === "key" ? key : "";
+
+      document.getElementById("term-host-title").innerText = `Remote Terminal: ${activeHost}:${activePort}`;
+      document.getElementById("term-user-prefix").innerText = `${activeHost.split('@')[0] || 'ssh'}&gt;`;
+
+      switchTab("terminal");
+      appendTerminalLine(`\n=== Terhubung secara manual ke ${activeHost}:${activePort} (${authType.toUpperCase()}) ===\n`, "sys");
+      showToast(`Terhubung ke ${activeHost}`);
+    }
+
+    async function handleManualPing() {
+      const host = document.getElementById("manual-host").value.trim();
+      const port = parseInt(document.getElementById("manual-port").value) || 22;
+      const authType = document.getElementById("manual-authtype").value;
+      const pass = document.getElementById("manual-password").value;
+      const key = document.getElementById("manual-keypath").value.trim();
+
+      if (!host) {
+        alert("Masukkan host terlebih dahulu.");
+        return;
+      }
+      pingServer(host, port, authType === "key" ? key : "", authType === "password" ? pass : "");
+    }
+
+    // ---------------- USER MANAGEMENT (SUPER ADMIN) ----------------
+    async function loadUsersList() {
+      if (currentUser?.role !== "super_admin") return;
+      try {
+        const res = await apiFetch("/api/users");
+        if (!res.ok) return;
+        const data = await res.json();
+        const tbody = document.getElementById("users-table-body");
+        tbody.innerHTML = "";
+
+        data.users.forEach(u => {
+          const tr = document.createElement("tr");
+          const isMe = u.id === currentUser.id;
+          tr.className = "hover:bg-zinc-800/40 transition-colors";
+          tr.innerHTML = `
+            <td class="px-4 py-3 font-mono font-medium text-zinc-200">
+              ${escapeHtml(u.username)} ${isMe ? '<span class="text-zinc-500 font-sans text-[11px]">(Anda)</span>' : ''}
+            </td>
+            <td class="px-4 py-3 text-zinc-300">${escapeHtml(u.name)}</td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${u.role === 'super_admin' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}">
+                ${u.role === 'super_admin' ? 'SUPER ADMIN' : 'ADMIN'}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-zinc-400">${new Date(u.createdAt).toLocaleDateString('id-ID')}</td>
+            <td class="px-4 py-3 text-right space-x-1.5">
+              <button onclick="promptResetPassword('${u.id}', '${escapeHtml(u.username)}')" class="inline-flex items-center rounded border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 px-2 py-1 text-[11px] text-zinc-300 transition-colors">
+                Ubah Password
+              </button>
+              ${!isMe ? `
+                <button onclick="handleDeleteUser('${u.id}', '${escapeHtml(u.username)}')" class="inline-flex items-center rounded border border-red-900/40 bg-zinc-900 hover:bg-red-950/40 px-2 py-1 text-[11px] text-red-400 transition-colors">
+                  Hapus
+                </button>
+              ` : ''}
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        console.error("Gagal load users:", e);
+      }
+    }
+
+    function openAddUserModal() {
+      document.getElementById("user-new-username").value = "";
+      document.getElementById("user-new-name").value = "";
+      document.getElementById("user-new-pass").value = "";
+      document.getElementById("user-new-role").value = "admin";
+
+      const modal = document.getElementById("user-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      lucide.createIcons();
+    }
+
+    function closeUserModal() {
+      const modal = document.getElementById("user-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    async function handleSaveUser() {
+      const username = document.getElementById("user-new-username").value.trim();
+      const name = document.getElementById("user-new-name").value.trim();
+      const password = document.getElementById("user-new-pass").value;
+      const role = document.getElementById("user-new-role").value;
+
+      const res = await apiFetch("/api/users", {
+        method: "POST",
+        body: JSON.stringify({ username, name, password, role })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(`User ${username} berhasil dibuat!`);
+        closeUserModal();
+        loadUsersList();
+      } else {
+        alert(`Gagal membuat user: ${data.error}`);
+      }
+    }
+
+    async function promptResetPassword(userId, username) {
+      const newPass = prompt(`Masukkan password baru untuk '${username}' (min. 6 karakter):`);
+      if (!newPass) return;
+      if (newPass.length < 6) {
+        alert("Password minimal harus 6 karakter.");
+        return;
+      }
+
+      const res = await apiFetch(`/api/users/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify({ password: newPass })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(`Password ${username} berhasil diubah!`);
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    }
+
+    async function handleDeleteUser(userId, username) {
+      if (!confirm(`Hapus user '${username}'?`)) return;
+      const res = await apiFetch(`/api/users/${userId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(`User ${username} dihapus.`);
+        loadUsersList();
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    }
+
+    // ---------------- TERMINAL & AI EXECUTION ----------------
+    function handleAuthErrorCheck(stderrText, host) {
+      if (!stderrText || !stderrText.includes("Permission denied")) return;
+
+      appendTerminalLine(`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ [PANDUAN SOLUSI AUTENTIKASI SSH]:
+Server remote (${host}) menolak akses (Permission denied).
+Penyebab umum & solusi:
+1. Jika server menggunakan Password:
+   - Pastikan Anda memilih metode autentikasi 'Password' dan memasukkan password SSH user tersebut di form koneksi/edit server.
+2. Jika server menggunakan SSH Key:
+   - Tentukan lokasi file private key Anda (contoh: ~/.ssh/id_rsa).
+   - Pastikan public key Anda (~/.ssh/id_rsa.pub) telah didaftarkan pada server:
+     Jalankan di terminal lokal Mac Anda:
+     ssh-copy-id ${host}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, "err");
+    }
+
+    function appendTerminalLine(text, type = "out") {
+      const screen = document.getElementById("terminal-screen");
+      const span = document.createElement("div");
+      if (type === "cmd") span.className = "text-blue-400 font-semibold mt-2";
+      else if (type === "err") span.className = "text-red-400";
+      else if (type === "sys") span.className = "text-emerald-400 font-bold";
+      else span.className = "text-zinc-200";
+      span.innerText = text;
+      screen.appendChild(span);
+      screen.scrollTop = screen.scrollHeight;
+    }
+
+    function clearTerminal() {
+      document.getElementById("terminal-screen").innerText = "";
+    }
+
+    function clearChat() {
+      document.getElementById("chat-messages").innerHTML = `
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-mono text-[10px] font-bold shrink-0 mt-0.5">AI</div>
+          <div class="rounded-xl border border-zinc-800 bg-zinc-900/80 p-3 text-xs text-zinc-300 leading-relaxed shadow-sm">
+            Chat telah dibersihkan. Silakan beri instruksi DevOps baru.
+          </div>
+        </div>
+      `;
+      chatHistory = [];
+    }
+
+    async function handleDirectCommand() {
+      if (!activeHost) {
+        alert("Belum ada server yang terhubung. Silakan klik '🚀 Konek Langsung' pada server di tab [Koneksi SSH].");
+        return;
+      }
+      const input = document.getElementById("term-cmd-input");
+      const cmd = input.value.trim();
+      if (!cmd) return;
+      input.value = "";
+
+      appendTerminalLine(`$ ${cmd}`, "cmd");
+
+      try {
+        const res = await apiFetch("/api/execute", {
+          method: "POST",
+          body: JSON.stringify({
+            host: activeHost,
+            command: cmd,
+            port: activePort,
+            keyPath: activeKeyPath,
+            password: activePassword,
+          })
+        });
+        const out = await res.json();
+        if (out.stdout) appendTerminalLine(out.stdout, "out");
+        if (out.stderr) {
+          appendTerminalLine(out.stderr, "err");
+          handleAuthErrorCheck(out.stderr, activeHost);
+        }
+        if (out.exit_code !== 0) appendTerminalLine(`[Exit code: ${out.exit_code}]`, "err");
+      } catch (e) {
+        appendTerminalLine(`[Gagal]: ${e.message}`, "err");
+      }
+    }
+
+    function sendQuickPrompt(promptText) {
+      document.getElementById("chat-prompt-input").value = promptText;
+      handleSendAiMessage();
+    }
+
+    async function handleSendAiMessage() {
+      if (!activeHost) {
+        alert("Belum ada host SSH yang terhubung. Sambungkan dulu di tab [Koneksi SSH].");
+        return;
+      }
+      const input = document.getElementById("chat-prompt-input");
+      const prompt = input.value.trim();
+      if (!prompt) return;
+      input.value = "";
+
+      appendChatBubble("user", prompt);
+      chatHistory.push({ role: "user", content: prompt });
+
+      const sendBtn = document.getElementById("btn-send-ai");
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = `<span>Menganalisis...</span>`;
+
+      try {
+        const res = await apiFetch("/api/ai/chat", {
+          method: "POST",
+          body: JSON.stringify({ host: activeHost, messages: chatHistory })
+        });
+        const data = await res.json();
+
+        if (data.status === "requires_confirmation") {
+          pendingToolCall = data.tool_call;
+          showConfirmationModal(data.command, data.danger);
+        } else if (data.status === "completed") {
+          if (data.reply) {
+            appendChatBubble("assistant", data.reply);
+            chatHistory.push({ role: "assistant", content: data.reply });
+          }
+        } else if (data.error) {
+          appendChatBubble("assistant", `[!] Error AI: ${data.error}`);
+        }
+      } catch (e) {
+        appendChatBubble("assistant", `[!] Gagal: ${e.message}`);
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = `<span>Kirim</span><i data-lucide="send" class="w-3 h-3"></i>`;
+        lucide.createIcons();
+      }
+    }
+
+    function appendChatBubble(role, content) {
+      const container = document.getElementById("chat-messages");
+      const div = document.createElement("div");
+      div.className = "flex items-start gap-3 " + (role === "user" ? "flex-row-reverse" : "");
+
+      const avatar = document.createElement("div");
+      if (role === "user") {
+        avatar.className = "w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5";
+        avatar.innerText = (currentUser?.name || "U")[0].toUpperCase();
+      } else {
+        avatar.className = "w-6 h-6 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-mono text-[10px] font-bold shrink-0 mt-0.5";
+        avatar.innerText = "AI";
+      }
+
+      const bubble = document.createElement("div");
+      if (role === "user") {
+        bubble.className = "rounded-xl rounded-tr-sm bg-blue-600 text-white p-3 text-xs leading-relaxed max-w-[85%] shadow-sm";
+      } else {
+        bubble.className = "rounded-xl rounded-tl-sm border border-zinc-800 bg-zinc-900/80 p-3 text-xs text-zinc-300 leading-relaxed max-w-[85%] shadow-sm";
+      }
+      bubble.innerText = content;
+
+      div.appendChild(avatar);
+      div.appendChild(bubble);
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function showConfirmationModal(command, danger) {
+      const modal = document.getElementById("confirm-modal");
+      const box = document.getElementById("modal-box");
+      const title = document.getElementById("modal-title");
+      const alertBox = document.getElementById("modal-alert-box");
+      const alertText = document.getElementById("modal-alert-text");
+      const cmdText = document.getElementById("modal-cmd-text");
+      const strictArea = document.getElementById("modal-strict-input-area");
+      const strictInput = document.getElementById("modal-strict-confirm-input");
+
+      cmdText.innerText = command;
+      strictInput.value = "";
+
+      if (danger && danger.isDangerous) {
+        box.className = "w-full max-w-lg rounded-xl border border-red-700 bg-zinc-950 p-6 shadow-2xl shadow-red-950/50";
+        title.innerText = "⚠️ PERINGATAN: Perintah Berisiko Tinggi!";
+        alertBox.className = "mt-3 p-3 rounded-lg bg-red-950/40 border border-red-800 text-xs text-red-200 font-medium";
+        alertText.innerText = `Alasan: ${danger.reason}`;
+        strictArea.classList.remove("hidden");
+      } else {
+        box.className = "w-full max-w-lg rounded-xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl";
+        title.innerText = "Konfirmasi Eksekusi Perintah Remote";
+        alertBox.className = "mt-3 p-3 rounded-lg bg-amber-950/20 border border-amber-800/60 text-xs text-amber-200";
+        alertText.innerText = `AI merekomendasikan eksekusi perintah shell berikut di \`${activeHost}\`:`;
+        strictArea.classList.add("hidden");
+      }
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      lucide.createIcons();
+    }
+
+    async function handleApproveCommand() {
+      if (!pendingToolCall) return;
+      const strictArea = document.getElementById("modal-strict-input-area");
+      if (!strictArea.classList.contains("hidden")) {
+        const val = document.getElementById("modal-strict-confirm-input").value.trim().toLowerCase();
+        if (val !== "ya" && val !== "yes") {
+          alert('Ketik persis "YA" untuk menyetujui perintah berisiko tinggi ini!');
+          return;
+        }
+      }
+
+      const modal = document.getElementById("confirm-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+
+      const tc = pendingToolCall;
+      pendingToolCall = null;
+
+      appendTerminalLine(`[AI Execution]: $ ${tc.command}`, "cmd");
+
+      try {
+        const res = await apiFetch("/api/ai/confirm", {
+          method: "POST",
+          body: JSON.stringify({
+            host: activeHost,
+            approved: true,
+            tool_call: tc,
+            messages: chatHistory,
+            port: activePort,
+            keyPath: activeKeyPath,
+            password: activePassword,
+          })
+        });
+        const result = await res.json();
+        if (result.stdout) appendTerminalLine(result.stdout, "out");
+        if (result.stderr) {
+          appendTerminalLine(result.stderr, "err");
+          handleAuthErrorCheck(result.stderr, activeHost);
+        }
+
+        if (result.next_reply) {
+          appendChatBubble("assistant", result.next_reply);
+          chatHistory.push({ role: "assistant", content: result.next_reply });
+        }
+      } catch (e) {
+        appendTerminalLine(`[Error]: ${e.message}`, "err");
+      }
+    }
+
+    async function handleRejectCommand() {
+      const modal = document.getElementById("confirm-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+
+      if (!pendingToolCall) return;
+      const tc = pendingToolCall;
+      pendingToolCall = null;
+
+      appendTerminalLine(`[Dibatalkan]: $ ${tc.command}`, "err");
+      try {
+        const res = await apiFetch("/api/ai/confirm", {
+          method: "POST",
+          body: JSON.stringify({
+            host: activeHost,
+            approved: false,
+            tool_call: tc,
+            messages: chatHistory
+          })
+        });
+        const result = await res.json();
+        if (result.next_reply) {
+          appendChatBubble("assistant", result.next_reply);
+        }
+      } catch {}
+    }
+
+    // ---------------- AI SETTINGS ----------------
+    async function loadAiConfig() {
+      try {
+        const res = await apiFetch("/api/config");
+        if (res.ok) {
+          const cfg = await res.json();
+          document.getElementById("cfg-api-url").value = cfg.api_url || "";
+          document.getElementById("cfg-api-key").value = cfg.api_key || "";
+          document.getElementById("cfg-model").value = cfg.model || "gpt-4o";
+        }
+      } catch {}
+    }
+
+    async function handleSaveAiSettings() {
+      const api_url = document.getElementById("cfg-api-url").value.trim();
+      const api_key = document.getElementById("cfg-api-key").value.trim();
+      const model = document.getElementById("cfg-model").value.trim();
+
+      const res = await apiFetch("/api/config", {
+        method: "POST",
+        body: JSON.stringify({ api_url, api_key, model })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast("Pengaturan AI berhasil disimpan!");
+      } else {
+        alert("Error: " + data.error);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "waxterm",
+  "version": "1.0.0",
+  "description": "Waxterm: AI-integrated SSH Client powered by Rust Core and Bun.js",
+  "type": "module",
+  "bin": "./bin/waxterm",
+  "scripts": {
+    "build": "cargo build --release",
+    "start": "bun run src/index.ts",
+    "ui": "bun run src/server.ts",
+    "dev": "bun run src/server.ts",
+    "test": "cargo test && bun test",
+    "test:rust": "cargo test",
+    "test:bun": "bun test"
+  }
+}

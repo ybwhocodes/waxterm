@@ -1,0 +1,20 @@
+# NOTICE
+
+Waxterm is derived from **Termimus** (https://github.com/termimus/termimus-ssh).
+
+- Original project: Termimus — Self-hosted SSH & Server Manager
+- Original copyright: Copyright (c) 2026 Fadilah Riczky
+- Original license: MIT License (see LICENSE)
+
+Waxterm changes:
+
+- Rebranding (product name, identifiers, package names, assets, documentation).
+- AI Copilot flow extended with a structured `clarify` action: when the
+  user's request is missing a detail that would materially change the
+  command, the model returns one question plus 2–4 selectable options
+  instead of guessing. The chosen option is sent back with the original
+  request and question to produce the final command.
+- Go sync relay module/package names and environment variables renamed to
+  `waxterm` / `WAXTERM_*`.
+- The previous Bun + shell-`ssh` implementation is archived under `legacy/`
+  for reference; it is not part of the current application.

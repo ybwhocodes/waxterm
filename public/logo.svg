@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Waxterm">
+  <defs>
+    <linearGradient id="waxterm-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2ee6c5"/>
+      <stop offset="1" stop-color="#00a6a6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#waxterm-g)"/>
+  <path d="M15 21.5 26 32 15 42.5" fill="none" stroke="#061a1c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M31 42.5h17" fill="none" stroke="#061a1c" stroke-width="5" stroke-linecap="round"/>
+  <path d="M47.5 16.5c.6 2.7 1.6 3.7 4.3 4.3-2.7.6-3.7 1.6-4.3 4.3-.6-2.7-1.6-3.7-4.3-4.3 2.7-.6 3.7-1.6 4.3-4.3Z" fill="#f6fffd"/>
+</svg>

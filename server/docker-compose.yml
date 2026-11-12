@@ -1,0 +1,29 @@
+services:
+  waxterm-sync:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/waxterm/waxterm-sync:latest
+    container_name: waxterm-sync
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - waxterm_sync_data:/data
+    environment:
+      - PORT=8080
+      - DATA_DIR=/data
+      - DB_PATH=/data/sync.db
+      # Required. Put it in a .env file next to this compose file, e.g.:
+      #   echo "WAXTERM_AUTH_TOKEN=$(openssl rand -hex 32)" > .env
+      - WAXTERM_AUTH_TOKEN=${WAXTERM_AUTH_TOKEN:?Set WAXTERM_AUTH_TOKEN (e.g. openssl rand -hex 32)}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  waxterm_sync_data:
+    driver: local

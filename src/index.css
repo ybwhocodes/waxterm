@@ -1,0 +1,206 @@
+@import "tailwindcss";
+@import "@xterm/xterm/css/xterm.css";
+
+/* Embedded Offline Fonts */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/jetbrains-mono/600.css";
+@import "@fontsource/jetbrains-mono/700.css";
+@import "@fontsource/fira-code/400.css";
+@import "@fontsource/fira-code/500.css";
+@import "@fontsource/fira-code/600.css";
+@import "@fontsource/fira-code/700.css";
+
+/* Embedded Offline Powerline & Nerd Font Symbols */
+@font-face {
+  font-family: 'Symbols Nerd Font Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/SymbolsNerdFontMono-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Symbols Nerd Font';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/SymbolsNerdFont-Regular.woff2') format('woff2');
+}
+
+/* Fallback symbols directly attached to bundled JetBrains Mono & Fira Code */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/SymbolsNerdFontMono-Regular.woff2') format('woff2');
+  unicode-range: U+23FB-23FE, U+2630, U+2665, U+26A1, U+276C-2771, U+2B58, U+E000-E00A, U+E0A0-E0A3, U+E0B0-E0C8, U+E0CA, U+E0CC-E0D2, U+E0D4, U+E0D6-E0D7, U+E200-E2A9, U+E300-E3E3, U+E5FA-E6BB, U+E700-E958, U+EA60-EA88, U+EA8A-EA8C, U+EA8F-EAC7, U+EAC9, U+EACC-EB09, U+EB0B-EB4E, U+EB50-EC5E, U+EC60-EC84, U+ED00-EFCF, U+F000-F385, U+F400-F533, U+F0001-F1AF0;
+}
+
+@font-face {
+  font-family: 'Fira Code';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/SymbolsNerdFontMono-Regular.woff2') format('woff2');
+  unicode-range: U+23FB-23FE, U+2630, U+2665, U+26A1, U+276C-2771, U+2B58, U+E000-E00A, U+E0A0-E0A3, U+E0B0-E0C8, U+E0CA, U+E0CC-E0D2, U+E0D4, U+E0D6-E0D7, U+E200-E2A9, U+E300-E3E3, U+E5FA-E6BB, U+E700-E958, U+EA60-EA88, U+EA8A-EA8C, U+EA8F-EAC7, U+EAC9, U+EACC-EB09, U+EB0B-EB4E, U+EB50-EC5E, U+EC60-EC84, U+ED00-EFCF, U+F000-F385, U+F400-F533, U+F0001-F1AF0;
+}
+
+@layer base {
+  :root {
+    --canvas: #0a0e14;
+    --surface: #10141a;
+    --surface-low: #181c22;
+    --surface-container: #1c2026;
+    --surface-high: #262a31;
+    --surface-highest: #31353c;
+    --border: #262a31;
+    --border-subtle: #30363d;
+    --border-muted: #1f242c;
+
+    --primary: #00d2b4;
+    --primary-hover: #2adec0;
+    --on-primary: #00382e;
+
+    --secondary: #38bdf8;
+    --tertiary: #cbacff;
+    --success: #3fb950;
+    --danger: #f85149;
+    --warning: #e3b341;
+
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+
+    /* Backward-compat aliases for older components */
+    --background: var(--canvas);
+    --sidebar: var(--surface-low);
+    --card: var(--surface-container);
+    --accent: var(--primary);
+    --accent-hover: var(--primary-hover);
+
+    color-scheme: dark;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    color-scheme: dark;
+    background-color: var(--surface-container);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding-right: 2.5rem !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238b949e' stroke-width='2'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1rem 1rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+
+  select:hover {
+    border-color: var(--border-subtle);
+  }
+
+  select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px rgba(0, 210, 180, 0.25);
+  }
+
+  select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  select option {
+    background-color: #1c2026;
+    color: #f0f6fc;
+    padding: 8px 12px;
+  }
+
+  input, textarea {
+    color-scheme: dark;
+    background-color: var(--surface-container);
+    color: var(--text-primary);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    /* Let the OS/fontconfig pick rendering (subpixel AA on LCDs,
+       hinting profiles). Forced grayscale made text look thin/soft. */
+    text-rendering: geometricPrecision;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .font-mono, [class*="font-mono"], code, pre, kbd, input.font-mono {
+    font-family: 'JetBrains Mono', 'Symbols Nerd Font Mono', 'Symbols Nerd Font', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-feature-settings: 'liga' on, 'calt' on, 'zero' on;
+    letter-spacing: -0.01em;
+  }
+
+  /* Custom subtle scrollbars */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #262a31;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3b424e;
+  }
+
+  .gpu-layer {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+}
+
+/* Port-forwarding diagram: dashes flowing along a tunnel connector. */
+@keyframes tunnel-flow {
+  to {
+    background-position: 12px 0;
+  }
+}
+.tunnel-flow {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--primary) 0 6px,
+    transparent 6px 12px
+  );
+  background-size: 12px 100%;
+  animation: tunnel-flow 0.6s linear infinite;
+}
+.tunnel-flow-reverse {
+  animation-direction: reverse;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tunnel-flow {
+    animation: none;
+  }
+}
